@@ -41,7 +41,11 @@ everyone.now.joinGame = function(gameId){
 };
 
 everyone.on('leave', function(){
-    console.log(this.user.clientId + ' left game ' + this.user.game);
+    if (this.user.game) {
+        var group = nowjs.getGroup(this.user.game);
+        group.now.playerLeft(this.user);
+        console.log(this.user.clientId + ' left game ' + this.user.game);
+    }
 });
 
 
