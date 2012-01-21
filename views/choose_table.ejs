@@ -1,0 +1,7 @@
+<h1>Select a game to join</h1>
+
+<ul>
+<% for(var id in tables) {%>
+    <li><a href="/table/<%= id %>"><%= id %></a></li>
+<% } %>
+</ul>

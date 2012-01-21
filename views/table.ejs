@@ -1,0 +1,27 @@
+<button id="leave">Leave</button>
+
+
+<script type="text/javascript" src="/js/game.js"></script>
+<script type="text/javascript">
+now.ready(function(){
+    var game = new nsfw.cards.Game({
+        id: '<%= id %>'
+    });
+
+    $('#leave').on('click', function(event){
+        now.leave(game.id, function(){
+            alert('Too much for ya, eh?');
+            window.location.href = '/';
+        });
+        event.preventDefault();
+    });
+
+    $(document).bind('game.playerLeft', function(event, user){
+        console.log('A player has left this game: ' + user.name);
+    });
+
+    $(document).bind('game.playerJoined', function(event, user){
+        console.log('A player has joined this game: ' + user.name);
+    });
+});
+</script>
