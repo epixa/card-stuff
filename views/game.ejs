@@ -1,9 +1,12 @@
-<script type="text/javascript" src="/js/game.js"></script>
-
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 <script type="text/javascript">
-now.ready(function(){
-    new nsfw.cards.Game({
-        id: '<%= id %>'
+    var sio = io.connect('http://localhost:3000');
+
+    sio.socket.on('error', function(reason){
+        console.error('Unable to connect Socket.IO', reason);
     });
-});
+
+    sio.on('connect', function(){
+        console.info('We are connected and ready to go');
+    });
 </script>
