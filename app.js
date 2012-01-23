@@ -41,6 +41,41 @@ app.configure('production', function(){
 });
 
 
+// Temporary storage for rooms
+// @todo Replace with a persistent storage mechanism (i.e. redis)
+var rooms = {
+    'cerf' : {
+        game: {},
+        players: {}
+    },
+    'babbage' : {
+        game: {},
+        players: {}
+    },
+    'lovelace' : {
+        game: {},
+        players: {}
+    }
+};
+
+// Temporary storage for users
+// @todo Replace with a persistent storage mechanism (i.e. mongodb)
+var users = {
+    'court' : {
+        'id' : 1,
+        'name' : 'Court'
+    },
+    'kurt' : {
+        'id' : 2,
+        'name' : 'Kurt'
+    },
+    'dan' : {
+        'id' : 3,
+        'name' : 'Dan'
+    }
+};
+
+
 // When a new websocket opens, set up a session object that we can access on future calls
 // through that same websocket
 sio.set('authorization', function(data, accept){
@@ -82,14 +117,28 @@ sio.sockets.on('connection', function(socket){
 });
 
 
-// A catch-all to make sure the user specifies a game
+// A catch-all to make sure the user specifies a room
 app.get('/', function(request, response){
-    response.render('nogame');
+    // If we have a valid login, then persist the user's identity in session
+    if (!request.session.user && request.query.auth && users[request.query.auth]) {
+        request.session.user = users[request.query.auth];
+    }
+
+    if (request.session.user) {
+        response.render('select_room', {rooms: rooms});
+    } else {
+        response.render('auth');
+    }
 });
 
-// Load the game screen for the specified game
-app.get('/game/:id', function(request, response){
-    response.render('game', {id: request.params.id});
+// Load the game screen for the specified room
+app.get('/room/:id', function(request, response){
+    if (!request.session.user) {
+        response.redirect('home');
+        return;
+    }
+
+    response.render('room', {id: request.params.id});
 });
 
 
