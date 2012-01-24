@@ -8,8 +8,8 @@
 // Module dependencies
 var express = require('express');
 var connect = require('connect');
-
 var io = require('socket.io');
+var mongoose = require('mongoose');
 
 
 // Initialize app
@@ -19,6 +19,8 @@ var sio = io.listen(app);
 
 var MemoryStore = express.session.MemoryStore;
 var sessionStore = new MemoryStore();
+
+var User = require('./lib/models/user');
 
 
 // Configuration app
@@ -30,6 +32,20 @@ app.configure(function(){
     app.use(express.session({ secret: 'Sl18TAiM4B49g9CD1TK9oVJIyoH63Sdq', store: sessionStore }));
     app.use(app.router);
     app.use(express.static(__dirname + '/public'));
+
+    mongoose.connect('mongodb://localhost/cards');
+
+    ['court', 'dan', 'elyse', 'kurt'].forEach(function(username){
+        mongoose.model('User').findOne({ username: username }, function(error, user){
+            if (error) {
+                console.error('Could not determine if user `' + username + '` exists: ' + error);
+            } else if (!user) {
+                var user = new User({ username: username });
+                user.save();
+                console.info('Created user: ' + username);
+            }
+        });
+    });
 });
 
 app.configure('development', function(){
@@ -55,23 +71,6 @@ var rooms = {
     'lovelace' : {
         game: {},
         players: {}
-    }
-};
-
-// Temporary storage for users
-// @todo Replace with a persistent storage mechanism (i.e. mongodb)
-var users = {
-    'court' : {
-        'id' : 1,
-        'name' : 'Court'
-    },
-    'kurt' : {
-        'id' : 2,
-        'name' : 'Kurt'
-    },
-    'dan' : {
-        'id' : 3,
-        'name' : 'Dan'
     }
 };
 
@@ -117,18 +116,36 @@ sio.sockets.on('connection', function(socket){
 });
 
 
-// A catch-all to make sure the user specifies a room
+// A catch-all to make sure the user specifies a room or logs in
 app.get('/', function(request, response){
-    // If we have a valid login, then persist the user's identity in session
-    if (!request.session.user && request.query.auth && users[request.query.auth]) {
-        request.session.user = users[request.query.auth];
-    }
-
     if (request.session.user) {
         response.render('select_room', {rooms: rooms});
     } else {
         response.render('auth');
     }
+});
+
+// Handle authentication attempts
+app.post('/', function(request, response){
+    var username = request.body.auth;
+
+    if (request.session.user || !username) {
+        response.redirect('home');
+        return;
+    }
+
+    mongoose.model('User').findOne({ username: username }, function(error, user){
+        if (error) {
+            console.error('Failed to retrieve user information: ' + error);
+        } else if (!user) {
+            console.info('No user found with that username: ' + username);
+        } else {
+            console.info('User successfully logged in: ' + username);
+            request.session.user = user;
+        }
+
+        response.redirect('home');
+    });
 });
 
 // Load the game screen for the specified room
