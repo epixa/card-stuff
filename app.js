@@ -21,6 +21,7 @@ var MemoryStore = express.session.MemoryStore;
 var sessionStore = new MemoryStore();
 
 var User = require('./lib/models/user');
+var Room = require('./lib/models/room');
 
 
 // Configuration app
@@ -35,6 +36,7 @@ app.configure(function(){
 
     mongoose.connect('mongodb://localhost/cards');
 
+    // Set up any missing users
     ['court', 'dan', 'elyse', 'kurt'].forEach(function(username){
         mongoose.model('User').findOne({ username: username }, function(error, user){
             if (error) {
@@ -43,6 +45,19 @@ app.configure(function(){
                 var user = new User({ username: username });
                 user.save();
                 console.info('Created user: ' + username);
+            }
+        });
+    });
+
+    // Set up any missing rooms
+    ['cerf', 'babbage', 'lovelace', 'dijkstra'].forEach(function(name){
+        mongoose.model('Room').findOne({ name: name }, function(error, room){
+            if (error) {
+                console.error('Could not determine if room `' + name + '` exists: ' + error);
+            } else if (!room) {
+                var room = new Room({ name: name, game: {}, players: {} });
+                room.save();
+                console.info('Created room: ' + name);
             }
         });
     });
@@ -55,24 +70,6 @@ app.configure('development', function(){
 app.configure('production', function(){
     app.use(express.errorHandler());
 });
-
-
-// Temporary storage for rooms
-// @todo Replace with a persistent storage mechanism (i.e. redis)
-var rooms = {
-    'cerf' : {
-        game: {},
-        players: {}
-    },
-    'babbage' : {
-        game: {},
-        players: {}
-    },
-    'lovelace' : {
-        game: {},
-        players: {}
-    }
-};
 
 
 // When a new websocket opens, set up a session object that we can access on future calls
@@ -119,7 +116,13 @@ sio.sockets.on('connection', function(socket){
 // A catch-all to make sure the user specifies a room or logs in
 app.get('/', function(request, response){
     if (request.session.user) {
-        response.render('select_room', {rooms: rooms});
+        mongoose.model('Room').find({}, function(error, rooms){
+            if (error) {
+                console.error('Failed to retrieve rooms: ' + error);
+            } else {
+                response.render('select_room', {rooms: rooms});
+            }
+        });
     } else {
         response.render('auth');
     }
@@ -149,13 +152,26 @@ app.post('/', function(request, response){
 });
 
 // Load the game screen for the specified room
-app.get('/room/:id', function(request, response){
+app.get('/room/:name', function(request, response){
+    var name = request.params.name;
+
     if (!request.session.user) {
         response.redirect('home');
         return;
     }
 
-    response.render('room', {id: request.params.id});
+    mongoose.model('Room').findOne({ name: name }, function(error, room){
+        if (error) {
+            console.error('Failed to retrieve room `' + name + '`: ' + error);
+        } else if (!room) {
+            console.error('Room not found: ' + name);
+        } else {
+            response.render('room', {id: room.name});
+            return;
+        }
+
+        response.redirect('home');
+    });
 });
 
 

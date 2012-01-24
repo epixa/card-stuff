@@ -2,6 +2,6 @@
 
 <ul>
 <% for(var id in rooms) {%>
-    <li><a href="/room/<%= id %>"><%= id %></a></li>
+    <li><a href="/room/<%= rooms[id].name %>"><%= rooms[id].name %></a></li>
 <% } %>
 </ul>
