@@ -106,6 +106,32 @@ sio.sockets.on('connection', function(socket){
         });
     }, 60 * 1000);
 
+    socket.on('cards.model.sync', function(name, data, method, options){
+        console.log('1-----------');
+        console.log(name);
+        console.log(data);
+        console.log(method);
+        console.log(options);
+        console.log('2-----------');
+        switch(method) {
+            case 'create':
+                var Model = mongoose.model(name);
+                var entity = new Model(data);
+                entity.save(function(error, entity){
+                    if (error) {
+                        socket.emit('error', error.err);
+                        console.error(error);
+                    } else {
+                        console.log(entity);
+                        socket.emit('');
+                    }
+
+                });
+                break;
+        }
+
+    });
+
     socket.on('disconnect', function(){
         console.log('A socket with sessionID ' + handshake.sessionID + ' disconnected.');
         clearInterval(intervalID);

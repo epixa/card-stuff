@@ -1,5 +1,8 @@
-<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+<script data-main="/src/app" src="/assets/js/require.js"></script>
+
 <script type="text/javascript">
+/*jQuery(function($){
     var sio = io.connect('http://localhost:3000');
 
     sio.socket.on('error', function(reason){
@@ -7,6 +10,7 @@
     });
 
     sio.on('connect', function(){
-        console.info('We are connected and ready to go');
+        cards.run(sio);
     });
+});*/
 </script>
