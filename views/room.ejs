@@ -1,16 +1,15 @@
 
-<script data-main="/src/app" src="/assets/js/require.js"></script>
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/underscore.js"></script>
+<script src="/assets/js/backbone.js"></script>
+<script src="/assets/js/require.js"></script>
+
+<script src="/socket.io/socket.io.js"></script>
 
 <script type="text/javascript">
-/*jQuery(function($){
-    var sio = io.connect('http://localhost:3000');
-
-    sio.socket.on('error', function(reason){
-        console.error('Unable to connect Socket.IO', reason);
+$(document).ready(function(){
+    require(["/src/controller/room"], function(dispatch) {
+        dispatch('<%= room %>');
     });
-
-    sio.on('connect', function(){
-        cards.run(sio);
-    });
-});*/
+});
 </script>

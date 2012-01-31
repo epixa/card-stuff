@@ -72,6 +72,26 @@ app.configure('production', function(){
 });
 
 
+/**
+ * Creates a new error type and returns the resulting json
+ *
+ * @param severity
+ * @param code
+ */
+function createError(severity, type)
+{
+    // @todo Add logging
+
+    var data = {severity: severity};
+    if (typeof type != 'undefined') {
+        data.type = type;
+    }
+
+    var Error = mongoose.model('Error');
+    return (new Error(data)).toJSON();
+}
+
+
 // When a new websocket opens, set up a session object that we can access on future calls
 // through that same websocket
 sio.set('authorization', function(data, accept){
@@ -100,41 +120,41 @@ sio.sockets.on('connection', function(socket){
 
     console.log('A socket with sessionID ' + handshake.sessionID + ' connected.');
 
+    // Every minute make sure that the session remains alive (heartbeat)
     var intervalID = setInterval(function(){
         handshake.session.reload(function(){
             handshake.session.touch().save();
         });
     }, 60 * 1000);
 
-    socket.on('cards.model.sync', function(name, data, method, options){
-        console.log('1-----------');
-        console.log(name);
-        console.log(data);
-        console.log(method);
-        console.log(options);
-        console.log('2-----------');
-        switch(method) {
-            case 'create':
-                var Model = mongoose.model(name);
-                var entity = new Model(data);
-                entity.save(function(error, entity){
-                    if (error) {
-                        socket.emit('error', error.err);
-                        console.error(error);
-                    } else {
-                        console.log(entity);
-                        socket.emit('');
-                    }
-
-                });
-                break;
-        }
-
-    });
-
     socket.on('disconnect', function(){
         console.log('A socket with sessionID ' + handshake.sessionID + ' disconnected.');
         clearInterval(intervalID);
+    });
+
+    socket.on('room:load', function(roomId, callback){
+        mongoose.model('Room').findOne({ name: roomId }, function(error, room){
+            if (error) {
+                console.error(error);
+            } else if (!room) {
+                callback(createError('FATAL', 'app:no-room'));
+            } else {
+                // @todo: Create a new Player model and associate it to this room; following should be create callback
+
+                // Ensures that this client is subscribed to this room
+                socket.join(room.name);
+
+                // Notifies existing players in the room when this client disconnects
+                socket.on('disconnect', function(){
+                    socket.broadcast.to(room.name).emit('app:client-disconnected');
+                    console.log('A socket with sessionID ' + handshake.sessionID + ' disconnected.');
+                    clearInterval(intervalID);
+                });
+                // @todo End lines to move to create player callback
+
+                callback(null, room.toJSON());
+            }
+        });
     });
 });
 
@@ -179,25 +199,12 @@ app.post('/', function(request, response){
 
 // Load the game screen for the specified room
 app.get('/room/:name', function(request, response){
-    var name = request.params.name;
-
     if (!request.session.user) {
         response.redirect('home');
         return;
     }
 
-    mongoose.model('Room').findOne({ name: name }, function(error, room){
-        if (error) {
-            console.error('Failed to retrieve room `' + name + '`: ' + error);
-        } else if (!room) {
-            console.error('Room not found: ' + name);
-        } else {
-            response.render('room', {id: room.name});
-            return;
-        }
-
-        response.redirect('home');
-    });
+    response.render('room', {id: request.params.name});
 });
 
 
