@@ -8,14 +8,8 @@
  *
  * Each room also keeps track of its associated web socket namespace.
  */
-(function(Room){
-    var Game = cards.module('game');
-    var Player = cards.module('player');
-
-    Room.Model = cards.RealtimeModel.extend({
-        name: 'Room',
-        initialize: function(){
-            this.set({ players: new Player.List() });
-        }
+define(['models/realtime'], function(Realtime){
+    return Realtime.Model.extend({
+        _model: 'Room'
     });
-})(cards.module('room'));
+});

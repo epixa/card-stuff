@@ -7,8 +7,9 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <script type="text/javascript">
+require.config({ baseUrl: '/src' });
 $(document).ready(function(){
-    require(["/src/controller/room.js"], function(dispatch) {
+    require(["controller/room"], function(dispatch) {
         dispatch('<%= room %>');
     });
 });
