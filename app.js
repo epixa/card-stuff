@@ -20,8 +20,11 @@ var sio = io.listen(app);
 var MemoryStore = express.session.MemoryStore;
 var sessionStore = new MemoryStore();
 
-var User = require('./lib/models/user');
+var Game = require('./lib/models/game');
+var GameType = require('./lib/models/game_type');
+var Player = require('./lib/models/player');
 var Room = require('./lib/models/room');
+var User = require('./lib/models/user');
 
 
 // Configuration app
@@ -42,7 +45,7 @@ app.configure(function(){
             if (error) {
                 console.error('Could not determine if user `' + username + '` exists: ' + error);
             } else if (!user) {
-                var user = new User({ username: username });
+                user = new User({ username: username });
                 user.save();
                 console.info('Created user: ' + username);
             }
@@ -55,9 +58,22 @@ app.configure(function(){
             if (error) {
                 console.error('Could not determine if room `' + name + '` exists: ' + error);
             } else if (!room) {
-                var room = new Room({ name: name, game: {}, players: {} });
+                room = new Room({ name: name, game: {}, players: {} });
                 room.save();
                 console.info('Created room: ' + name);
+            }
+        });
+    });
+
+    // Set up any missing game types
+    ['golf'].forEach(function(name){
+        mongoose.model('GameType').findOne({ name: name }, function(error, type){
+            if (error) {
+                console.error('Could not determine if game type `' + name + '` exists: ' + error);
+            } else if (!type) {
+                type = new GameType({ name: name });
+                type.save();
+                console.info('Created game type: ' + name);
             }
         });
     });
@@ -117,6 +133,7 @@ sio.set('authorization', function(data, accept){
 // we make sure to keep the session alive.
 sio.sockets.on('connection', function(socket){
     var handshake = socket.handshake;
+    var user = handshake.session.user;
 
     console.log('A socket with sessionID ' + handshake.sessionID + ' connected.');
 
@@ -133,27 +150,56 @@ sio.sockets.on('connection', function(socket){
     });
 
     socket.on('room:load', function(roomId, callback){
-        mongoose.model('Room').findOne({ name: roomId }, function(error, room){
+        mongoose.model('Room').findOne({ name: roomId }).populate('game').run(function(error, room){
             if (error) {
                 console.error(error);
+                return;
             } else if (!room) {
                 callback(createError('FATAL', 'app:no-room'));
-            } else {
-                // @todo: Create a new Player model and associate it to this room; following should be create callback
-
-                // Ensures that this client is subscribed to this room
-                socket.join(room.name);
-
-                // Notifies existing players in the room when this client disconnects
-                socket.on('disconnect', function(){
-                    socket.broadcast.to(room.name).emit('app:client-disconnected');
-                    console.log('A socket with sessionID ' + handshake.sessionID + ' disconnected.');
-                    clearInterval(intervalID);
-                });
-                // @todo End lines to move to create player callback
-
-                callback(null, room.toJSON());
+                return;
             }
+
+            mongoose.model('Player').find({ room: room }, ['_id', 'name'], function(error, players){
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+
+                var player = new Player({ name: user.username, room: room._id, user: user._id });
+                player.save(function(error){
+                    if (error) {
+                        console.error(error);
+                        return;
+                    }
+
+                    // Ensures that this client is subscribed to this room's socket namespace
+                    socket.join(room.name);
+
+                    // Notifies existing players in the room when this client disconnects
+                    socket.on('disconnect', function(){
+                        console.log('A socket with sessionID ' + handshake.sessionID + ' disconnected.');
+                        clearInterval(intervalID);
+                        player.remove(function(error){
+                            if (error) {
+                                console.error(error);
+                                return;
+                            }
+
+                            socket.broadcast.to(room.name).emit('app:player-disconnected', player);
+                        });
+                    });
+
+                    players.push(player);
+
+                    var data = {
+                        room: room.toJSON(),
+                        player: player.toJSON(),
+                        players: players
+                    };
+
+                    callback(null, data);
+                });
+            });
         });
     });
 });
@@ -204,7 +250,7 @@ app.get('/room/:name', function(request, response){
         return;
     }
 
-    response.render('room', {id: request.params.name});
+    response.render('room', {room: request.params.name});
 });
 
 
