@@ -9,7 +9,9 @@
  * Each room also keeps track of its associated web socket namespace.
  */
 define(['models/realtime'], function(Realtime){
-    return Realtime.Model.extend({
-        _model: 'Room'
-    });
+    return {
+        Model: Realtime.Model.extend({
+            _model: 'Room'
+        })
+    };
 });

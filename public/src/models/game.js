@@ -1,5 +1,7 @@
 define(['models/realtime'], function(Realtime){
-    return Realtime.Model.extend({
-        _model: 'Game'
-    });
+    return {
+        Model: Realtime.Model.extend({
+            _model: 'Game'
+        })
+    };
 });
