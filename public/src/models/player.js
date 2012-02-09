@@ -1,9 +1,15 @@
-define(['models/realtime'], function(Realtime){
+define([
+    'models/realtime'
+], function(Realtime){
+    var context = 'player';
+
     var Model = Realtime.Model.extend({
-        _model: 'Player'
+        context: context,
+        idAttribute: '_id'
     });
 
-    var Collection = Backbone.Collection.extend({
+    var Collection = Realtime.Collection.extend({
+        context: context,
         model: Model
     });
 

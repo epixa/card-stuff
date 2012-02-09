@@ -149,6 +149,21 @@ sio.sockets.on('connection', function(socket){
         clearInterval(intervalID);
     });
 
+    socket.on('model:sync', function(method, context, data, callback){
+        console.log(method);
+        console.log(context);
+        console.log(data);
+        callback(null, data);
+    });
+
+    socket.on('collection:sync', function(method, context, data, callback){
+        console.log(method);
+        console.log(context);
+        console.log(data);
+        callback(null, data);
+    });
+
+    // @todo get rid of this in favor of fetching a room with model:sync
     socket.on('room:load', function(roomId, callback){
         mongoose.model('Room').findOne({ name: roomId }).populate('game').run(function(error, room){
             if (error) {
@@ -177,8 +192,6 @@ sio.sockets.on('connection', function(socket){
 
                     // Notifies existing players in the room when this client disconnects
                     socket.on('disconnect', function(){
-                        console.log('A socket with sessionID ' + handshake.sessionID + ' disconnected.');
-                        clearInterval(intervalID);
                         player.remove(function(error){
                             if (error) {
                                 console.error(error);

@@ -8,10 +8,33 @@
  *
  * Each room also keeps track of its associated web socket namespace.
  */
-define(['models/realtime'], function(Realtime){
+define([
+    'app',
+    'models/realtime',
+    'models/player'
+], function(App, Realtime, Player){
+    var context = 'player';
+
+    var Model = Realtime.Model.extend({
+        context: context,
+        idAttribute: '_id',
+        players: new Player.Collection(),
+        load: function(){
+            if (!this.attributes.name) {
+                return App.error({ severity: 'FATAL', message: 'A room name is required in order to load a room' });
+            }
+            this.fetch();
+            this.players.fetch({ room: this.attributes.name });
+        }
+    });
+
+    var Collection = Realtime.Collection.extend({
+        context: context,
+        model: Model
+    });
+
     return {
-        Model: Realtime.Model.extend({
-            _model: 'Room'
-        })
+        Model: Model,
+        Collection: Collection
     };
 });

@@ -1,7 +1,12 @@
-define(['models/realtime'], function(Realtime){
+define([
+    'models/realtime'
+], function(Realtime){
+    var context = 'player';
+
     return {
         Model: Realtime.Model.extend({
-            _model: 'Game'
+            context: context,
+            idAttribute: '_id'
         })
     };
 });
