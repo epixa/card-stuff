@@ -4,6 +4,7 @@
 
 var io = require('socket.io');
 var connect = require('connect');
+var util = require('underscore');
 
 /**
  * @param App    The application state
@@ -53,10 +54,15 @@ module.exports = function(App, server){
         });
 
         socket.on('model:sync', function(method, context, data, callback){
-            console.log(method);
-            console.log(context);
-            console.log(data);
-            callback(null, data);
+            if (util.isUndefined(App.Modules[context])) {
+                return callback(App.createError('FATAL', 'INVALID_ARG', context + ' is not a valid context'));
+            }
+
+            if (util.isUndefined(App.Modules[context].SyncModel[method])) {
+                return callback(App.createError('FATAL', 'INVALID_ARG', method + ' is not a valid sync method'));
+            }
+
+            App.Modules[context].SyncModel[method](data, callback);
         });
 
         socket.on('collection:sync', function(method, context, data, callback){

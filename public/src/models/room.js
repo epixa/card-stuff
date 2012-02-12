@@ -13,19 +13,12 @@ define([
     'models/realtime',
     'models/player'
 ], function(App, Realtime, Player){
-    var context = 'player';
+    var context = 'Room';
 
     var Model = Realtime.Model.extend({
         context: context,
         idAttribute: '_id',
-        players: new Player.Collection(),
-        load: function(){
-            if (!this.attributes.name) {
-                return App.error({ severity: 'FATAL', message: 'A room name is required in order to load a room' });
-            }
-            this.fetch({ name: this.get('name') });
-            this.players.fetch({ room: this.get('name') });
-        }
+        players: new Player.Collection()
     });
 
     var Collection = Realtime.Collection.extend({

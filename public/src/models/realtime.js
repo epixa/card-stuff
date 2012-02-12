@@ -32,6 +32,10 @@ define([
                 }
 
                 return App.socket.emit('model:sync', method, context, data, function(error, data){
+                    if (error) {
+                        console.error(error);
+                    }
+
                     callback(error, data, options);
                 });
             }
