@@ -23,8 +23,8 @@ define([
             if (!this.attributes.name) {
                 return App.error({ severity: 'FATAL', message: 'A room name is required in order to load a room' });
             }
-            this.fetch();
-            this.players.fetch({ room: this.attributes.name });
+            this.fetch({ name: this.get('name') });
+            this.players.fetch({ room: this.get('name') });
         }
     });
 
