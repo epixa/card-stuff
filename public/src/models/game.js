@@ -1,7 +1,7 @@
 define([
     'models/realtime'
 ], function(Realtime){
-    var context = 'player';
+    var context = 'Game';
 
     return {
         Model: Realtime.Model.extend({

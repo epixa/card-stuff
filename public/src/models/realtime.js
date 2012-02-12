@@ -46,6 +46,10 @@ define([
                 var context = collection.context;
 
                 return App.socket.emit('collection:sync', method, context, data, function(error, data){
+                    if (error) {
+                        console.error(error);
+                    }
+
                     callback(error, data, options);
                 });
             }

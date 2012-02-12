@@ -66,10 +66,15 @@ module.exports = function(App, server){
         });
 
         socket.on('collection:sync', function(method, context, data, callback){
-            console.log(method);
-            console.log(context);
-            console.log(data);
-            callback(null, data);
+            if (util.isUndefined(App.Modules[context])) {
+                return callback(App.createError('FATAL', 'INVALID_ARG', context + ' is not a valid context'));
+            }
+
+            if (util.isUndefined(App.Modules[context].SyncCollection[method])) {
+                return callback(App.createError('FATAL', 'INVALID_ARG', method + ' is not a valid sync method'));
+            }
+
+            App.Modules[context].SyncCollection[method](data, callback);
         });
     });
 };
