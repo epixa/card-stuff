@@ -1,3 +1,10 @@
+/**
+ * Bootstraps the modules in the current app
+ * 
+ * Modules are logical groupings of models, collections, and associated
+ * functionality
+ */
+
 var fs = require('fs');
 var util = require('underscore');
 
@@ -6,8 +13,9 @@ var util = require('underscore');
  *
  * A module's name is parsed from its filename with the given algorithm:
  *  - The .js extension is dropped off
- *  - The first letter of each word (separated by one or more spaces/underscores) is capitalized
- *  - All spaces/underscores are then removed
+ *  - Words are separated by one or more spaces or underscores
+ *  - The first letter of each word is capitalized
+ *  - All spaces and underscores are then removed
  *
  *  e.g. my_module_name.js => MyModuleName
  *

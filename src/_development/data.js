@@ -1,8 +1,8 @@
 /**
  * Sets up the default data for development
  *
- * While no data is removed with this, arbitrary new data is created if it doesn't already exist.
- * As such, this should never be ran in production.
+ * While no data is removed with this, arbitrary new data is created if it
+ * doesn't already exist. As such, this should never be ran in production.
  *
  * @param App The application state
  */

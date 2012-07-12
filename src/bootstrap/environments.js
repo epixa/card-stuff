@@ -15,12 +15,23 @@ module.exports = function(App, server){
         server.use(express.static(App.ROOT_PATH + '/public'));
     });
 
+    /**
+     * Loads the production config and sets up the production error handling
+     *
+     * Production should handle errors without dumping debugging information to
+     * screen.
+     */
     server.configure('production', function(){
         App.Config = App.require('config/production');
 
         server.use(express.errorHandler());
     });
 
+    /**
+     * Loads the development config and sets up development error handling
+     *
+     * Development should handle errors by dumping them to screen.
+     */
     server.configure('development', function(){
         App.Config = App.require('config/development');
 

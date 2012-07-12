@@ -1,5 +1,8 @@
 /**
  * Sets up the session storage and session middleware
+ *
+ * The name of the session storage adapter as well as the secret salt for
+ * session keys is retrieved from the App configuration.
  */
 
 var express = require('express');
