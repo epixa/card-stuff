@@ -1,0 +1,7 @@
+<h1>Select a game room to join</h1>
+
+<ul>
+<% for(var id in rooms) {%>
+    <li><a href="/room/<%= rooms[id].name %>"><%= rooms[id].name %></a></li>
+<% } %>
+</ul>
